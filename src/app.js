@@ -59,11 +59,12 @@
 			q.el = el;
 
 			// init libraries
-			q.ui     = new q._deps.ui ( q ); q._deps.uifx ( q );
-			q.engine = new q._deps.engine ( q );
-			q.state  = new q._deps.state ( 4, q );
-			q.rec    = new q._deps.rec ( q );
-			q.fls    = new q._deps.fls ( q );
+			q.ui      = new q._deps.ui ( q ); q._deps.uifx ( q );
+			q.engine  = new q._deps.engine ( q );
+			q.state   = new q._deps.state ( 4, q );
+			q.rec     = new q._deps.rec ( q );
+			q.fls     = new q._deps.fls ( q );
+			q.history = new q._deps.history( q );
 
 			if (w.location.href.split('local=')[1]) {
 				var sess = w.location.href.split('local=')[1];
