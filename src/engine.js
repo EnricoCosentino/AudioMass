@@ -1214,7 +1214,7 @@
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Hard Limit (fx)',
-					meta : [ start, end ],
+					meta : [ start, end , val],
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1244,11 +1244,11 @@
 
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
-
+			console.log(val);
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Parametric EQ (fx)',
-					meta : [ start, end ],
+					meta : [ start, end , val],
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1330,11 +1330,14 @@
 
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
-
+			var params = (function(valObj) {
+				var value = valObj[0].val;
+				return [value];
+			})(val);
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Distortion (fx)',
-					meta : [ start, end ],
+					meta : [ start, end, params ],
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1390,11 +1393,16 @@
 
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
-
+			var params = (function(valObj) {
+				var delay = valObj.delay.val;
+				var feedback = valObj.feedback.val;
+				var mix = valObj.mix.val;
+				return [delay, feedback, mix];
+			})(val);
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Delay (fx)',
-					meta : [ start, end ],
+					meta : [ start, end, params],
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1450,11 +1458,16 @@
 
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
-
+			var params = (function(valObj) {
+				var time = valObj.time;
+				var decay = valObj.decay;
+				var mix = valObj.mix;
+				return [time, decay, mix];
+			})(val);
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Reverb (fx)',
-					meta : [ start, end ],
+					meta : [ start, end, params ],
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1511,11 +1524,18 @@
 
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
-
+			var params = (function(valObj) {
+				var threshold = valObj.threshold.val;
+				var knee = valObj.knee.val;
+				var ratio = valObj.ratio.val;
+				var attack = valObj.attack.val;
+				var release = valObj.release.val;
+				return [threshold, knee, ratio, attack, release];
+			})(val);
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Compressor (fx)',
-					meta : [ start, end ],
+					meta : [ start, end, params ],
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1548,7 +1568,7 @@
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Normalize ',
-					meta : [ start, end ],
+					meta : [ start, end, val ],
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1799,11 +1819,12 @@
 
 			var start = 0;
 			var end   = wavesurfer.getDuration();
+			var vals = [val, val2];
 
 			function handleStateInline ( start, end, title, cb ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : title,
-					meta : [ start, end ],
+					meta : [ start, end, vals ],
 					data : wavesurfer.backend.buffer,
 					cb   : cb
 				});
@@ -2037,11 +2058,15 @@
 
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
+			var params = (function(valObj) {
+				var value = valObj[0].val;
+				return [value];
+			})(val);
 
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Gain (fx)',
-					meta : [ start, end ],
+					meta : [ start, end, params ],
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -2103,7 +2128,7 @@
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Speed (fx)',
-					meta : [ start, end ],
+					meta : [ start, end, val ],
 					data : wavesurfer.backend.buffer
 				});
 			}

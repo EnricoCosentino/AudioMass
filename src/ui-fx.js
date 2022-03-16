@@ -191,7 +191,7 @@
 					clss:'pk_modal_a_accpt',
 					callback: function( q ) {
 						var value = getvalue ( q );
-
+						console.log(value[0].val);
 						if (value[0].val != 1.0)
 							app.fireEvent ('RequestActionFX_GAIN', value);
 

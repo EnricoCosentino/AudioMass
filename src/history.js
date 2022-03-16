@@ -17,7 +17,8 @@
                 eventString = eventString.concat(" from ", state.meta[0]);
                 if (state.meta[1])
                 {
-                    eventString = eventString.concat(" for ", state.meta[1], " s");
+                    eventString = eventString.concat(" for ", state.meta[1], " s ");
+                    if (state.meta[2]) eventString = eventString.concat("with the following param(s): ", state.meta[2].toString());
                 }
             }
             history.push(eventString);
