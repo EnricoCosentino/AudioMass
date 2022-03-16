@@ -942,10 +942,11 @@
 
 			var start = q.TrimTo (region.start, 3);
 			var end = q.TrimTo ( (region.end - region.start), 3)
-
+			console.log(region)
 			app.fireEvent ('StateRequestPush', {
 				desc : 'Cut',
-				meta : [ start, end ],
+				meta : [ start, end ], 
+				region : region,
 				data : wavesurfer.backend.buffer
 			});
 
@@ -1013,6 +1014,7 @@
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Silence',
 					meta : [ start, end ],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1052,6 +1054,7 @@
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Paste',
 					meta : [ start, end ],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1139,6 +1142,7 @@
 					app.fireEvent ('StateRequestPush', {
 						desc : 'Record Audio',
 						meta : [ start, end ],
+						region : region,
 						data : wavesurfer.backend.buffer
 					});
 				}
@@ -1210,11 +1214,13 @@
 
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
+			var params = val;
 
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Hard Limit (fx)',
-					meta : [ start, end , val],
+					meta : [ start, end , params, val],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1244,11 +1250,12 @@
 
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
-			console.log(val);
+			var params = val;
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Parametric EQ (fx)',
-					meta : [ start, end , val],
+					meta : [ start, end , params, val],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1337,7 +1344,8 @@
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Distortion (fx)',
-					meta : [ start, end, params ],
+					meta : [ start, end, params, val ],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1402,7 +1410,8 @@
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Delay (fx)',
-					meta : [ start, end, params],
+					meta : [ start, end, params, val],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1467,7 +1476,8 @@
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Reverb (fx)',
-					meta : [ start, end, params ],
+					meta : [ start, end, params, val ],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1535,7 +1545,8 @@
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Compressor (fx)',
-					meta : [ start, end, params ],
+					meta : [ start, end, params, val ],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1564,11 +1575,12 @@
 
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
-
+			var params = val;
 			function handleStateInline ( start, end ) {
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Normalize ',
-					meta : [ start, end, val ],
+					meta : [ start, end, params, val ],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1603,6 +1615,7 @@
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Invert ',
 					meta : [ start, end ],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1637,6 +1650,7 @@
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Remove Silence ',
 					meta : [ start, end ],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1911,6 +1925,7 @@
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Reverse ',
 					meta : [ start, end ],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1944,6 +1959,7 @@
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Fade In (fx)',
 					meta : [ start, end ],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -1977,6 +1993,7 @@
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Fade Out (fx)',
 					meta : [ start, end ],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -2067,6 +2084,7 @@
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Gain (fx)',
 					meta : [ start, end, params ],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}
@@ -2129,6 +2147,7 @@
 				app.fireEvent ('StateRequestPush', {
 					desc : 'Apply Speed (fx)',
 					meta : [ start, end, val ],
+					region : region,
 					data : wavesurfer.backend.buffer
 				});
 			}

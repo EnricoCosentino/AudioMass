@@ -21,8 +21,11 @@
                     if (state.meta[2]) eventString = eventString.concat("with the following param(s): ", state.meta[2].toString());
                 }
             }
-            history.push(eventString);
-            console.log(eventString);
+            var event = {'message':eventString};
+            if (state.region) event.region = state.region;
+            if(state.meta[3]) event.params = state.meta[3];
+            history.push(event);
+            console.log(event);
             return(true);
         };
 
