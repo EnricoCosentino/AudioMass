@@ -925,6 +925,13 @@
 								obj.classList.remove ('pk_inact');
 							});
 						}
+					},
+
+					{
+						name: 'Open History',
+						action: function () {
+							app.fireEvent ('RequestActionFXUI_History');
+						}
 					}
 				]
 			},

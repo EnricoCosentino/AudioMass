@@ -191,7 +191,6 @@
 					clss:'pk_modal_a_accpt',
 					callback: function( q ) {
 						var value = getvalue ( q );
-						console.log(value[0].val);
 						if (value[0].val != 1.0)
 							app.fireEvent ('RequestActionFX_GAIN', value);
 
@@ -434,7 +433,58 @@
 			x.Show();
 		});
 
+		app.listenFor ('RequestActionFXUI_History', function() {
+			if (!PKAudioEditor.engine.is_ready) return ;
 
+			app.fireEvent ( 'RequestRegionClear');
+			var history = app.history.getHistory();
+			var len = history.length;
+			var boxes = (function() {
+				var boxDefinitions = "";
+				for (let i = 0; i < len; i++) {
+					if (history[i].state.active === true) boxDefinitions = boxDefinitions.concat('<input type="checkbox" checked="true" class="pk_check" id="' , i ,'" name=event',i,'" value="',i,'">');
+					else boxDefinitions = boxDefinitions.concat('<input type="checkbox" class="pk_check" id="' , i ,'" name=event',i,'" value="',i,'">');
+					boxDefinitions = boxDefinitions.concat('<label for="',i,'">',history[i].message,'</label><br/>');
+				}
+				return boxDefinitions;
+			})();
+			var x = new PKSimpleModal({
+			 title: 'History',
+			 ondestroy: function( q ) {
+				UI.InteractionHandler.on = false;
+				UI.KeyHandler.removeCallback ('modalTemp');
+			 },
+			 buttons:[
+				 {
+					title:'Apply Changes',
+					clss: 'pk_modal_a_accpt',
+					callback: function ( q ) {
+						var changedEventsIndices = []
+						for (let i = 0; i < len; i++) {
+							if (history[i].state.active !== q.el_body.getElementsByClassName('pk_check')[i].checked) {
+								changedEventsIndices.push(i);
+							}
+						}
+						app.fireEvent('RequestActionEditHistory', changedEventsIndices);
+						q.Destroy();
+					}
+				 }
+			 ],
+			 body:'<div class="pk_row pk_mm">'+
+			 		boxes +
+					'</div>',
+			 setup:function( q ) {
+
+				for (let i = 0; i < history.length; i++) console.log(i + ": " + history[i].state.active);
+				UI.fireEvent ('RequestPause');
+					UI.InteractionHandler.checkAndSet ('modal');
+					UI.KeyHandler.addCallback ('modalTemp', function ( e ) {
+						q.Destroy ();
+					}, [27]);
+			 }
+			});
+			x.Show();
+		});
 
 		app.listenFor ('RequestFXUI_Silence', function () {
 			var x = new PKSimpleModal({

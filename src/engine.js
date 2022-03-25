@@ -932,7 +932,7 @@
 			// ---
 		};
 
-		app.listenFor ('RequestActionCut', function () {
+		app.listenFor ('RequestActionCut', function ( redo ) {
 			if (!q.is_ready) return ;
 			
 			var region = wavesurfer.regions.list[0];
@@ -942,14 +942,16 @@
 
 			var start = q.TrimTo (region.start, 3);
 			var end = q.TrimTo ( (region.end - region.start), 3)
-			console.log(region)
-			app.fireEvent ('StateRequestPush', {
-				desc : 'Cut',
-				meta : [ start, end ], 
-				region : region,
-				data : wavesurfer.backend.buffer
-			});
-
+			if (!redo) {
+				app.fireEvent ('StateRequestPush', {
+					desc : 'Cut',
+					meta : [ start, end ], 
+					region : region,
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionCut'
+				});
+			}
 			var cutbuffer = AudioUtils.Trim (
 				start,
 				end
@@ -975,6 +977,11 @@
 			app.fireEvent ('DidCut', cutbuffer);
 			
 			OneUp ('Cut :: ' + q.TrimTo (start, 2) + ' to ' + q.TrimTo (start/1 + end/1, 2), 1100);
+
+			if (redo) {
+				app.fireEvent('IncreaseHistoryCounter');
+				app.fireEvent('NextHistoryOperation');
+			}
 		});
 		
 		app.listenFor ('RequestActionCopy', function () {
@@ -1000,9 +1007,8 @@
 			OneUp ('Copied range');
 		});
 		
-		app.listenFor ('RequestActionSilence', function ( offset, silence_duration ) {
+		app.listenFor ('RequestActionSilence', function ( offset, silence_duration, redo ) {
 			if (!q.is_ready) return ;
-
 			app.fireEvent('RequestPause');
 
 			var region = wavesurfer.regions.list[0];
@@ -1010,19 +1016,21 @@
 			
 			if (!silence_duration || silence_duration < 0) silence_duration = 1;
 
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end) {
+				app.fireEvent (event, {
 					desc : 'Silence',
 					meta : [ start, end ],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionSilence'
 				});
 			}
 
 			var start = offset;
 			var end = silence_duration;
 
-			handleStateInline ( start, end );
+			if (!redo) handleStateInline ( 'StateRequestPush', start, end,);
 			dims = AudioUtils.Insert (
 				offset, 
 				AudioUtils.MakeSilence ( silence_duration )
@@ -1037,11 +1045,14 @@
 			});
 
 			app.fireEvent ('RequestSeekTo', (dims[0]/wavesurfer.getDuration()));
-			
+			if (redo) {
+				app.fireEvent('IncreaseHistoryCounter');
+				app.fireEvent('NextHistoryOperation');
+			}
 			OneUp ('Inserted Silence');
 		});
 
-		app.listenFor ('RequestActionPaste', function () {
+		app.listenFor ('RequestActionPaste', function (redo) {
 			if (!q.is_ready) return ;
 			if (!copy_buffer) return (false);
 
@@ -1050,26 +1061,28 @@
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
 
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end ) {
+				app.fireEvent (event, {
 					desc : 'Paste',
 					meta : [ start, end ],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionPaste'
 				});
 			}
 			
 			if (!region) {
 				var offset = q.TrimTo (wavesurfer.getCurrentTime(), 3);
 				
-				handleStateInline ( offset );
+				if (!redo) handleStateInline ( 'StateRequestPush', offset );
 				dims = AudioUtils.Insert ( offset, copy_buffer );
 			}
 			else {
 				var start = q.TrimTo (region.start, 3);
 				var end = q.TrimTo ((region.end - region.start), 3);
 
-				handleStateInline ( start, end );
+				if (!redo) handleStateInline ( 'StateRequestPush', start, end );
 
 				dims = AudioUtils.Replace (
 					start,
@@ -1091,6 +1104,10 @@
 				new_seek = dims[0]/wavesurfer.getDuration ();
 			}
 			app.fireEvent ('RequestSeekTo', new_seek);
+			if (redo) {
+				app.fireEvent('IncreaseHistoryCounter');
+				app.fireEvent('NextHistoryOperation');
+			}
 
 			OneUp ('Paste to ' + dims[0].toFixed(2), 982);
 		});
@@ -1127,7 +1144,7 @@
 			app.rec.stop ();
 		});
 
-		app.listenFor ('RequestActionRecordStart', function () {
+		app.listenFor ('RequestActionRecordStart', function (redo) {
 			if (!q.is_ready) return ;
 
 			app.fireEvent ('RequestPause');
@@ -1138,12 +1155,15 @@
 			app.rec.start ( pos, function ( offset, buffers ) {
 
 				// app.fireEvent ('RequestPause');
-				function handleStateInline ( start, end ) {
-					app.fireEvent ('StateRequestPush', {
+				function handleStateInline ( event, start, end ) {
+					app.fireEvent (event, {
 						desc : 'Record Audio',
 						meta : [ start, end ],
 						region : region,
-						data : wavesurfer.backend.buffer
+						data : wavesurfer.backend.buffer,
+						active : true,
+						name : 'RequestActionRecordStart'
+
 					});
 				}
 
@@ -1154,7 +1174,7 @@
 					return ;
 				}
 
-				handleStateInline ( offset );
+				if (!redo) handleStateInline ( 'StateRequestPush', offset );
 				var dims = AudioUtils.ReplaceFloatArrays ( offset, buffers );
 
 				// add a region where the paste happened
@@ -1207,7 +1227,8 @@
 			AudioUtils.FXPreview( start, end, AudioUtils.FXBank.HardLimit ( val ) );
 			app.fireEvent ('DidStartPreview');
 		});
-		app.listenFor ('RequestActionFX_HardLimit', function ( val ) {
+
+		app.listenFor ('RequestActionFX_HardLimit', function ( val, redo ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -1216,12 +1237,14 @@
 			var dims = [ 0, 0 ];
 			var params = val;
 
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end ) {
+				app.fireEvent (event, {
 					desc : 'Apply Hard Limit (fx)',
 					meta : [ start, end , params, val],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionFX_HardLimit'
 				});
 			}
 			
@@ -1237,13 +1260,13 @@
 			var start = q.TrimTo (region.start, 3);
 			var end = q.TrimTo ((region.end - region.start), 3);
 
-			handleStateInline ( start, end );
+			if (!redo) handleStateInline ( 'StateRequestPush', start, end );
 			AudioUtils.FX( start, end, AudioUtils.FXBank.HardLimit ( val ) );
-			
+
 			OneUp ('Applied Hard Limit (fx)');
 		});
 		
-		app.listenFor ('RequestActionFX_PARAMEQ', function ( val ) {
+		app.listenFor ('RequestActionFX_PARAMEQ', function ( val, redo ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -1251,12 +1274,14 @@
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
 			var params = val;
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end ) {
+				app.fireEvent (event, {
 					desc : 'Apply Parametric EQ (fx)',
 					meta : [ start, end , params, val],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionFX_PARAMEQ'
 				});
 			}
 			
@@ -1272,7 +1297,7 @@
 			var start = q.TrimTo (region.start, 3);
 			var end = q.TrimTo ((region.end - region.start), 3);
 
-			handleStateInline ( start, end );
+			if (!redo) handleStateInline ( 'StateRequestPush', start, end );
 			AudioUtils.FX( start, end, AudioUtils.FXBank.ParametricEQ ( val ) );
 			
 			OneUp ('Applied Parametric EQ (fx)');
@@ -1330,7 +1355,7 @@
 			AudioUtils.FXPreview( start, end, AudioUtils.FXBank.Distortion ( val ) );
 			app.fireEvent ('DidStartPreview');
 		});
-		app.listenFor ('RequestActionFX_DISTORT', function ( val ) {
+		app.listenFor ('RequestActionFX_DISTORT', function ( val, redo ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -1341,12 +1366,14 @@
 				var value = valObj[0].val;
 				return [value];
 			})(val);
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end ) {
+				app.fireEvent (event, {
 					desc : 'Apply Distortion (fx)',
 					meta : [ start, end, params, val ],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionFX_DISTORT'
 				});
 			}
 			
@@ -1362,7 +1389,7 @@
 			var start = q.TrimTo (region.start, 3);
 			var end = q.TrimTo ((region.end - region.start), 3);
 
-			handleStateInline ( start, end );
+			if (!redo) handleStateInline ( 'StateRequestPush', start, end );
 			AudioUtils.FX( start, end, AudioUtils.FXBank.Distortion ( val ) );
 			
 			OneUp ('Applied Distortion (fx)');
@@ -1394,7 +1421,7 @@
 			AudioUtils.FXPreview( start, end, AudioUtils.FXBank.Delay ( val ) );
 			app.fireEvent ('DidStartPreview');
 		});
-		app.listenFor ('RequestActionFX_DELAY', function ( val ) {
+		app.listenFor ('RequestActionFX_DELAY', function ( val, redo ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -1407,12 +1434,14 @@
 				var mix = valObj.mix.val;
 				return [delay, feedback, mix];
 			})(val);
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end ) {
+				app.fireEvent (event, {
 					desc : 'Apply Delay (fx)',
 					meta : [ start, end, params, val],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionFX_DELAY'
 				});
 			}
 			
@@ -1428,7 +1457,7 @@
 			var start = q.TrimTo (region.start, 3);
 			var end = q.TrimTo ((region.end - region.start), 3);
 
-			handleStateInline ( start, end );
+			if (!redo) handleStateInline ( 'StateRequestPush', start, end );
 			AudioUtils.FX( start, end, AudioUtils.FXBank.Delay ( val ) );
 			
 			OneUp ('Applied Delay (fx)');
@@ -1460,7 +1489,7 @@
 			AudioUtils.FXPreview( start, end, AudioUtils.FXBank.Reverb ( val ) );
 			app.fireEvent ('DidStartPreview');
 		});
-		app.listenFor ('RequestActionFX_REVERB', function ( val ) {
+		app.listenFor ('RequestActionFX_REVERB', function ( val, redo ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -1473,12 +1502,14 @@
 				var mix = valObj.mix;
 				return [time, decay, mix];
 			})(val);
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end ) {
+				app.fireEvent (event, {
 					desc : 'Apply Reverb (fx)',
 					meta : [ start, end, params, val ],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionFX_REVERB'
 				});
 			}
 			
@@ -1494,7 +1525,7 @@
 			var start = q.TrimTo (region.start, 3);
 			var end = q.TrimTo ((region.end - region.start), 3);
 
-			handleStateInline ( start, end );
+			if (!redo) handleStateInline ( 'StateRequestPush', start, end );
 			AudioUtils.FX( start, end, AudioUtils.FXBank.Reverb ( val ) );
 			
 			OneUp ('Applied Reverb (fx)');
@@ -1527,7 +1558,7 @@
 			app.fireEvent ('DidStartPreview');
 		});
 
-		app.listenFor ('RequestActionFX_Compressor', function ( val ) {
+		app.listenFor ('RequestActionFX_Compressor', function ( val, redo ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -1542,12 +1573,14 @@
 				var release = valObj.release.val;
 				return [threshold, knee, ratio, attack, release];
 			})(val);
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end ) {
+				app.fireEvent (event, {
 					desc : 'Apply Compressor (fx)',
 					meta : [ start, end, params, val ],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionFX_Compressor'
 				});
 			}
 			
@@ -1563,12 +1596,12 @@
 			var start = q.TrimTo (region.start, 3);
 			var end = q.TrimTo ((region.end - region.start), 3);
 
-			handleStateInline ( start, end );
+			if (!redo) handleStateInline ( 'StateRequestPush', start, end );
 			AudioUtils.FX( start, end, AudioUtils.FXBank.Compressor ( val ) );
 			
 			OneUp ('Applied Compressor (fx)');
 		});
-		app.listenFor ('RequestActionFX_Normalize', function ( val ) {
+		app.listenFor ('RequestActionFX_Normalize', function ( val, redo ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -1576,12 +1609,14 @@
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
 			var params = val;
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end ) {
+				app.fireEvent (event , {
 					desc : 'Normalize ',
 					meta : [ start, end, params, val ],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionFX_Normalize'
 				});
 			}
 			
@@ -1597,13 +1632,13 @@
 			var start = q.TrimTo (region.start, 3)
 			var end = q.TrimTo ((region.end - region.start), 3)
 
-			handleStateInline ( start, end );
+			if (!redo) handleStateInline ( 'StateRequestPush', start, end );
 			AudioUtils.FX( start, end, AudioUtils.FXBank.Normalize ( val ) );
 			
 			OneUp ('Applied Normalize');
 		});
 
-		app.listenFor ('RequestActionFX_Invert', function ( val ) {
+		app.listenFor ('RequestActionFX_Invert', function ( redo ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -1611,12 +1646,14 @@
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
 
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end ) {
+				app.fireEvent (event, {
 					desc : 'Invert ',
 					meta : [ start, end ],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionFX_Invert'
 				});
 			}
 			
@@ -1632,13 +1669,13 @@
 			var start = q.TrimTo (region.start, 3)
 			var end = q.TrimTo ((region.end - region.start), 3);
 
-			handleStateInline ( start, end );
+			if (!redo) handleStateInline ( 'StateRequestPush', start, end );
 			AudioUtils.FX( start, end, AudioUtils.FXBank.Invert() );
 			
 			OneUp ('Applied Invert');
 		});
 
-		app.listenFor ('RequestActionFX_RemSil', function ( val ) {
+		app.listenFor ('RequestActionFX_RemSil', function ( redo ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -1646,12 +1683,14 @@
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
 
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end ) {
+				app.fireEvent (event, {
 					desc : 'Remove Silence ',
 					meta : [ start, end ],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionFX_RemSil'
 				});
 			}
 			
@@ -1667,7 +1706,8 @@
 			var start = q.TrimTo (region.start, 3)
 			var end = q.TrimTo ((region.end - region.start), 3);
 
-			handleStateInline ( start, end );
+			if (!redo) handleStateInline ( 'StateRequestPush', start, end );
+			else handleStateInline ('UpdateState', start, end);
 
 						var originalBuffer = wavesurfer.backend.buffer;
 						var sil_arr = [];
@@ -1805,6 +1845,11 @@
 				wavesurfer.drawBuffer();
 			},40);
 
+			if (redo) {
+				app.fireEvent('IncreaseHistoryCounter');
+				app.fireEvent('NextHistoryOperation');
+			}
+
 			OneUp ('Applied :: Remove Silence');
 		});
 
@@ -1826,7 +1871,7 @@
 			wavesurfer.SelectedChannelsLen = chans;
 		};
 
-		app.listenFor ('RequestActionFX_Flip', function ( val, val2 ) {
+		app.listenFor ('RequestActionFX_Flip', function ( val, val2, redo ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -1835,23 +1880,25 @@
 			var end   = wavesurfer.getDuration();
 			var vals = [val, val2];
 
-			function handleStateInline ( start, end, title, cb ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end, title, cb ) {
+				app.fireEvent (event, {
 					desc : title,
 					meta : [ start, end, vals ],
 					data : wavesurfer.backend.buffer,
-					cb   : cb
+					cb   : cb,
+					active : true,
+					name : 'RequestActionFX_Flip'
 				});
 			}
 
 			if (val === 'flip')
 			{
-				handleStateInline ( start, end, 'Flip Channels' );
+				if (!redo) handleStateInline ( 'StateRequestPush', start, end, 'Flip Channels' );
 				AudioUtils.FX ( start, end, AudioUtils.FXBank.Flip ( val ) );
 			}
 			else if (val === 'stereo')
 			{
-				handleStateInline ( start, end, 'Make Stereo', function(){_compute_channels ()});
+				if (!redo) handleStateInline ( 'StateRequestPush', start, end, 'Make Stereo', function(){_compute_channels ()});
 
 				var originalBuffer = wavesurfer.backend.buffer;
 				var emptySegment   = wavesurfer.backend.ac.createBuffer (
@@ -1880,10 +1927,14 @@
 				_compute_channels ();
 
 				app.fireEvent ('RequestSeekTo', 0.00);
+				if (redo) {
+					app.fireEvent('IncreaseHistoryCounter');
+					app.fireEvent('NextHistoryOperation');
+				}
 			}
 			else if (val === 'mono')
 			{
-				handleStateInline ( start, end, 'Make Mono', function(){_compute_channels()} );
+				if (!redo) handleStateInline ('StateRequestPush', start, end, 'Make Mono', function(){_compute_channels()} );
 
 				var originalBuffer = wavesurfer.backend.buffer;
 				var emptySegment   = wavesurfer.backend.ac.createBuffer (
@@ -1908,12 +1959,16 @@
 				_compute_channels ();
 
 				app.fireEvent ('RequestSeekTo', 0.00);
+				if (redo) {
+					app.fireEvent('IncreaseHistoryCounter');
+					app.fireEvent('NextHistoryOperation');
+				}
 			}
 
 			OneUp ('Applied Channel Change: ' + val);
 		});
 
-		app.listenFor ('RequestActionFX_Reverse', function ( val ) {
+		app.listenFor ('RequestActionFX_Reverse', function ( redo ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -1921,12 +1976,14 @@
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
 
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end ) {
+				app.fireEvent (event, {
 					desc : 'Reverse ',
 					meta : [ start, end ],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionFX_Reverse'
 				});
 			}
 			
@@ -1942,12 +1999,13 @@
 			var start = q.TrimTo (region.start, 3)
 			var end = q.TrimTo ((region.end - region.start), 3);
 
-			handleStateInline ( start, end );
+			if (!redo) handleStateInline ( 'StateRequestPush', start, end );
 			AudioUtils.FX( start, end, AudioUtils.FXBank.Reverse() );
 			
 			OneUp ('Applied Reverse');
 		});
-		app.listenFor ('RequestActionFX_FadeIn', function ( val ) {
+
+		app.listenFor ('RequestActionFX_FadeIn', function ( redo ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -1955,12 +2013,14 @@
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
 
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end ) {
+				app.fireEvent (event, {
 					desc : 'Apply Fade In (fx)',
 					meta : [ start, end ],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionFX_FadeIn'
 				});
 			}
 			
@@ -1976,12 +2036,13 @@
 			var start = q.TrimTo (region.start, 3);
 			var end = q.TrimTo ((region.end - region.start), 3);
 
-			handleStateInline ( start, end );
+			if (!redo) handleStateInline ( 'StateRequestPush', start, end );
 			AudioUtils.FX( start, end, AudioUtils.FXBank.FadeIn() );
 			
 			OneUp ('Applied Fade In (fx)');
 		});
-		app.listenFor ('RequestActionFX_FadeOut', function ( val ) {
+
+		app.listenFor ('RequestActionFX_FadeOut', function ( redo ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -1989,12 +2050,14 @@
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
 
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline (event, start, end ) {
+				app.fireEvent (event, {
 					desc : 'Apply Fade Out (fx)',
 					meta : [ start, end ],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionFX_FadeOut'
 				});
 			}
 			
@@ -2010,7 +2073,7 @@
 			var start = q.TrimTo (region.start, 3);
 			var end = q.TrimTo ((region.end - region.start), 3);
 
-			handleStateInline ( start, end );
+			if (!redo) handleStateInline ( 'StateRequestPush', start, end );
 			AudioUtils.FX( start, end, AudioUtils.FXBank.FadeOut() );
 			
 			OneUp ('Applied Fade Out (fx)');
@@ -2068,7 +2131,7 @@
 			app.fireEvent ('DidStartPreview');
 		});
 
-		app.listenFor ('RequestActionFX_GAIN', function ( val ) {
+		app.listenFor ('RequestActionFX_GAIN', function ( val, redo ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -2080,12 +2143,14 @@
 				return [value];
 			})(val);
 
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end ) {
+				app.fireEvent (event, {
 					desc : 'Apply Gain (fx)',
-					meta : [ start, end, params ],
+					meta : [ start, end, params, val ],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionFX_GAIN'
 				});
 			}
 
@@ -2101,7 +2166,7 @@
 			var start = q.TrimTo (region.start, 3);
 			var end = q.TrimTo ((region.end - region.start), 3);
 
-			handleStateInline ( start, end );
+			if (!redo) handleStateInline ( 'StateRequestPush', start, end );
 			AudioUtils.FX( start, end, AudioUtils.FXBank.Gain( val ) );
 
 			OneUp ('Applied Gain (fx)');
@@ -2135,7 +2200,7 @@
 			app.fireEvent ('DidStartPreview');
 		});
 
-		app.listenFor ('RequestActionFX_SPEED', function ( val ) {
+		app.listenFor ('RequestActionFX_SPEED', function ( val, redo ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -2143,12 +2208,14 @@
 			var region = wavesurfer.regions.list[0];
 			var dims = [ 0, 0 ];
 
-			function handleStateInline ( start, end ) {
-				app.fireEvent ('StateRequestPush', {
+			function handleStateInline ( event, start, end ) {
+				app.fireEvent (event, {
 					desc : 'Apply Speed (fx)',
 					meta : [ start, end, val ],
 					region : region,
-					data : wavesurfer.backend.buffer
+					data : wavesurfer.backend.buffer,
+					active : true,
+					name : 'RequestActionFX_SPEED'
 				});
 			}
 
@@ -2167,7 +2234,7 @@
 			var duration = (region.end - region.start) / val;
 			duration = q.TrimTo (duration, 3);
 
-			handleStateInline ( start, end );
+			if (!redo) handleStateInline ( 'StateRequestPush', start, end );
 
 			var fx_buffer = AudioUtils.Copy ( start, end );
 			var originalBuffer = wavesurfer.backend.buffer;
@@ -2270,15 +2337,22 @@
 				// -
 			};
 
+			var nextHistoryEvent = function() {
+				master.fireEvent('IncreaseHistoryCounter');
+				master.fireEvent('NextHistoryOperation');
+			}
+
 			var offline_renderer = audio_ctx.startRendering(); 
 			if (offline_renderer)
-				offline_renderer.then( offline_callback ).catch(function(err) {
+				offline_renderer.then( offline_callback ).then(nextHistoryEvent).catch(function(err) {
 					console.log('Rendering failed: ' + err);
 				});
 			else
 				audio_ctx.oncomplete = function ( e ) {
 					offline_callback ( e.renderedBuffer );
 				};
+
+			//if (redo) app.fireEvent('NextHistoryOperation');
 		});
 		
 		app.listenFor ('StateDidPop', function ( state, undo ) {
@@ -2314,6 +2388,67 @@
 			else OneUp ('Redo ' + state.desc);
 		});
 
+		app.listenFor ('SetStateTo', function ( state ) {
+			if (!q.is_ready) return ;
+			app.fireEvent ('RequestPause');
+
+			wavesurfer.regions.clear();
+			wavesurfer.loadDecodedBuffer (state.data);
+
+			if (state.cb) state.cb ();
+
+			var new_durr = wavesurfer.getDuration ();
+			app.fireEvent ('DidUpdateLen', new_durr);
+
+			if (state.meta && state.meta.length > 0)
+			{
+				if (state.meta[1])
+				{
+					wavesurfer.regions.add({
+						start:state.meta[0]/1,
+						end:state.meta[0]/1 + state.meta[1]/1,
+						id:'t'
+					});
+				}
+				else
+				{
+					if (!new_durr) new_durr = 0.0001;
+					app.fireEvent ('RequestSeekTo', (state.meta[0]/new_durr));
+				}
+			}
+			app.fireEvent('NextHistoryOperation');
+		});
+
+		app.listenFor('RedoOperation', function ( state ) {
+			if (!q.is_ready) {
+				console.log('engine not ready, breaking operation chain');
+				return(false);
+			}
+			var new_durr = wavesurfer.getDuration ();
+			app.fireEvent ('DidUpdateLen', new_durr);
+			
+			if (state.meta && state.meta.length > 0)
+			{
+				if (state.meta[1])
+				{
+					wavesurfer.regions.add({
+						start:state.meta[0]/1,
+						end:state.meta[0]/1 + state.meta[1]/1,
+						id:'t'
+					});
+				}
+				else
+				{
+					if (!new_durr) new_durr = 0.0001;
+					app.fireEvent ('RequestSeekTo', (state.meta[0]/new_durr));
+				}
+			}
+			if (state.name === 'RequestActionSilence') app.fireEvent(state.name, state.meta[0], state.meta[1], true);
+			else if (state.name === 'RequestActionRecordStart') console.log("Recording: yet to define behaviour");
+			else if (state.name === 'RequestActionFX_Flip') app.fireEvent(state.name, state.meta[2][0], state.meta[2][1], true);
+			else if (state.meta && state.meta.length > 2) app.fireEvent(state.name, state.meta[state.meta.length - 1], true);
+			else if (state.meta && state.meta.length === 2) app.fireEvent(state.name, true);
+		});
 
 		// --- 
 		app.listenFor ('RequestChanToggle', function ( chan_index, force_val ) {

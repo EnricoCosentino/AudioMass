@@ -621,9 +621,14 @@
 				// -
 			};
 
+			var nextHistoryEvent = function() {
+				master.fireEvent('IncreaseHistoryCounter');
+				master.fireEvent('NextHistoryOperation');
+			}
+
 			var offline_renderer = audio_ctx.startRendering(); 
 			if (offline_renderer)
-				offline_renderer.then( offline_callback ).catch(function(err) {
+				offline_renderer.then( offline_callback ).then(nextHistoryEvent).catch(function(err) {
 					console.log('Rendering failed: ' + err);
 				});
 			else
