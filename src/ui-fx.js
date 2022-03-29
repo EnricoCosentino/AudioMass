@@ -436,7 +436,7 @@
 		app.listenFor ('RequestActionFXUI_History', function() {
 			if (!PKAudioEditor.engine.is_ready) return ;
 
-			app.fireEvent ( 'RequestRegionClear');
+			app.fireEvent ( 'RequestRegionClear' );
 			var history = app.history.getHistory();
 			var len = history.length;
 			var boxes = (function() {
@@ -485,6 +485,46 @@
 			});
 			x.Show();
 		});
+
+		app.listenFor ('RequestFXUI_HistoryContinue', function (state) {
+			if (!PKAudioEditor.engine.is_ready) return;
+			var x = new PKSimpleModal({
+				title: 'History',
+				ondestroy: function( q ) {
+				   UI.InteractionHandler.on = false;
+				   UI.KeyHandler.removeCallback ('modalTemp');
+				},
+				buttons:[
+					{
+					   title:'Continue',
+					   clss: 'pk_modal_a_accpt',
+					   callback: function ( q ) {
+							var radios = q.el_body.getElementsByClassName('pk_check');
+							if (radios[0].checked) app.fireEvent('RedoOperation', state, true);
+							else {
+								app.fireEvent('DeactivateCurrentEvent');
+								app.fireEvent('IncreaseHistoryCounter');
+								app.fireEvent('NextHistoryOperation');
+							}
+							q.Destroy();
+					   }
+					}
+				],
+				body: 'The operation ' + state.desc + ' will cause the track length to change and prevent all subsequent filters from being applied, do you wish to proceed anyway?' +
+				'<div class="pk_row"><input type="radio" class="pk_check" id="ifeq" name="rdslnc" value="yes">'+ 
+				'<label  for="ifeq">Yes, apply it</label><br/>' +
+				'<input type="radio" class="pk_check"  id="vgdja" name="rdslnc" checked value="no">'+
+				'<label for="vgdja">No, skip it</label></div>',
+				setup:function( q ) {
+   				   UI.fireEvent ('RequestPause');
+					   UI.InteractionHandler.checkAndSet ('modal');
+					   UI.KeyHandler.addCallback ('modalTemp', function ( e ) {
+						   q.Destroy ();
+					   }, [27]);
+				}
+			   });
+			   x.Show();
+		})
 
 		app.listenFor ('RequestFXUI_Silence', function () {
 			var x = new PKSimpleModal({

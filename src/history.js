@@ -114,6 +114,18 @@
         _listenFor('IncreaseHistoryCounter', function() {
             currentPoint++;
         })
+
+        _listenFor('DeactivateCurrentEvent', function(){
+            if (history[currentPoint]) history[currentPoint].state.active = false; 
+        });
+
+        _listenFor('DeactivateSubsequentEvents', function() {
+            currentPoint++;
+            while(history[currentPoint]) {
+                history[currentPoint].state.active = false;
+                currentPoint++;
+            }
+        })
     };
 
     PKAE._deps.history = PKHistory;

@@ -979,8 +979,7 @@
 			OneUp ('Cut :: ' + q.TrimTo (start, 2) + ' to ' + q.TrimTo (start/1 + end/1, 2), 1100);
 
 			if (redo) {
-				app.fireEvent('IncreaseHistoryCounter');
-				app.fireEvent('NextHistoryOperation');
+				app.fireEvent('DeactivateSubsequentEvents');
 			}
 		});
 		
@@ -1046,8 +1045,7 @@
 
 			app.fireEvent ('RequestSeekTo', (dims[0]/wavesurfer.getDuration()));
 			if (redo) {
-				app.fireEvent('IncreaseHistoryCounter');
-				app.fireEvent('NextHistoryOperation');
+				app.fireEvent('DeactivateSubsequentEvents');
 			}
 			OneUp ('Inserted Silence');
 		});
@@ -1105,8 +1103,7 @@
 			}
 			app.fireEvent ('RequestSeekTo', new_seek);
 			if (redo) {
-				app.fireEvent('IncreaseHistoryCounter');
-				app.fireEvent('NextHistoryOperation');
+				app.fireEvent('DeactivateSubsequentEvents');
 			}
 
 			OneUp ('Paste to ' + dims[0].toFixed(2), 982);
@@ -2337,14 +2334,13 @@
 				// -
 			};
 
-			var nextHistoryEvent = function() {
-				master.fireEvent('IncreaseHistoryCounter');
-				master.fireEvent('NextHistoryOperation');
+			var deactivateSubsequentEvents = function() {
+				if (redo) app.fireEvent('DeactivateSubsequentEvents');
 			}
 
 			var offline_renderer = audio_ctx.startRendering(); 
 			if (offline_renderer)
-				offline_renderer.then( offline_callback ).then(nextHistoryEvent).catch(function(err) {
+				offline_renderer.then( offline_callback ).then(deactivateSubsequentEvents).catch(function(err) {
 					console.log('Rendering failed: ' + err);
 				});
 			else
@@ -2419,7 +2415,7 @@
 			app.fireEvent('NextHistoryOperation');
 		});
 
-		app.listenFor('RedoOperation', function ( state ) {
+		app.listenFor('RedoOperation', function ( state, confirm ) {
 			if (!q.is_ready) {
 				console.log('engine not ready, breaking operation chain');
 				return(false);
@@ -2443,7 +2439,9 @@
 					app.fireEvent ('RequestSeekTo', (state.meta[0]/new_durr));
 				}
 			}
-			if (state.name === 'RequestActionSilence') app.fireEvent(state.name, state.meta[0], state.meta[1], true);
+			if (!confirm && (state.name === 'RequestActionSilence' ||state.name === 'RequestActionCut' || 
+							 state.name === 'RequestActionPaste' || state.name === 'RequestActionFX_SPEED')) app.fireEvent('RequestFXUI_HistoryContinue', state);
+			else if (state.name === 'RequestActionSilence') app.fireEvent(state.name, state.meta[0], state.meta[1], true);
 			else if (state.name === 'RequestActionRecordStart') console.log("Recording: yet to define behaviour");
 			else if (state.name === 'RequestActionFX_Flip') app.fireEvent(state.name, state.meta[2][0], state.meta[2][1], true);
 			else if (state.meta && state.meta.length > 2) app.fireEvent(state.name, state.meta[state.meta.length - 1], true);
