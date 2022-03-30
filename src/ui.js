@@ -839,7 +839,7 @@
 			{
 				name:'Edit',
 				children:[
-					{
+					/*{
 						name: 'Undo <span class="pk_shrtct">Shft+Z</span>',
 						clss: 'pk_inact',
 						action: function () {
@@ -881,7 +881,7 @@
 								}
 							});
 						}
-					},
+					},*/
 
 					{
 						name: 'Play <span class="pk_shrtct">Space</span>',

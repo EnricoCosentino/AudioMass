@@ -1,3 +1,5 @@
+//This script is currently isolated from the rest of the software, its functions have been integrated in the history component
+
 (function ( PKAE ) {
 	'use strict';
 	
@@ -94,7 +96,7 @@
 			_fireEvent ( 'DidStateChange', [], []);
 		};
 
-		_listenFor ('StateRequestPush', function ( _state ) {
+		/*_listenFor ('StateRequestPush', function ( _state ) {
 			q.pushUndoState ( _state );
 		});
 		_listenFor ('StateRequestUndo', function () {
@@ -109,7 +111,7 @@
 		_listenFor ('StateRequestLastState', function () {
 			_fireEvent ('StateDidLastState', q.getLastUndoState ());
 		});
-		// -
+		*/
 	};
 	
 	PKAE._deps.state = PKState;
