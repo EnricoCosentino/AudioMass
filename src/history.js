@@ -62,15 +62,8 @@
                 history[changedEventsIndices[i]].state.active = !history[changedEventsIndices[i]].state.active;
             }
             currentPoint = 0;
-            /*for (let i = 0; i < history.length; i++) {
-                if (history[i] && (!history[i].state.active || i === oldestChangedEvent)) {
-                    currentPoint = i;
-                    break;
-                }
-            }*/
             q.setStateBack(currentPoint);
             console.log("State set back to index " + currentPoint);
-            //q.redoOperations();
         };
 
         q.setStateBack = function(index) {
@@ -93,6 +86,10 @@
                 currentPoint++;
             }
             lastNewState = null;
+        }
+
+        q.resetHistory = function() {
+            history = [];
         }
 
         _listenFor('StateRequestPush', function(_state) {
@@ -125,7 +122,11 @@
                 history[currentPoint].state.active = false;
                 currentPoint++;
             }
-        })
+        });
+
+        _listenFor('ResetHistory', function() {
+            q.resetHistory();
+        });
     };
 
     PKAE._deps.history = PKHistory;

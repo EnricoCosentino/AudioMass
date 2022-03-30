@@ -15,13 +15,13 @@
 
 		var events = {};
 
-		q.fireEvent = function ( eventName, value, value2, value3 ) {
+		q.fireEvent = function ( eventName, value, value2, value3, value4 ) {
 			var group = events[eventName];
 			if (!group) return (false);
 
 			var l = group.length;
 			while (l-- > 0) {
-				group[l] && group[l] ( value, value2, value3 );
+				group[l] && group[l] ( value, value2, value3, value4 );
 			}
 		};
 

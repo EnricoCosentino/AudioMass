@@ -1109,7 +1109,6 @@
 			OneUp ('Paste to ' + dims[0].toFixed(2), 982);
 		});
 
-		var _sk = false;
 		app.listenFor ('RequestActionRecordToggle', function () {
 			if (!q.is_ready) {
 				// if not ready then bring up the new recording toggle!
@@ -1121,16 +1120,7 @@
 			if (app.rec.isActive ()) {
 				app.fireEvent('RequestActionRecordStop');
 			} else {
-				// skipping the sounds of keyboard
-				if (_sk) return ;
-
-				_sk = true;
-				setTimeout(function () {
-					app.fireEvent('RequestActionRecordStart');
-					setTimeout(function() {
-						_sk = false;
-					}, 50);
-				},26);
+				app.fireEvent('RequestFXUI_RecordConfirmation');
 			}
 		});
 
@@ -1152,7 +1142,7 @@
 			app.rec.start ( pos, function ( offset, buffers ) {
 
 				// app.fireEvent ('RequestPause');
-				function handleStateInline ( event, start, end ) {
+				/* function handleStateInline ( event, start, end ) {
 					app.fireEvent (event, {
 						desc : 'Record Audio',
 						meta : [ start, end ],
@@ -1162,7 +1152,7 @@
 						name : 'RequestActionRecordStart'
 
 					});
-				}
+				} */
 
 				// fire did record event!
 				app.fireEvent ('DidActionRecordStop', !!buffers);
@@ -1171,7 +1161,7 @@
 					return ;
 				}
 
-				if (!redo) handleStateInline ( 'StateRequestPush', offset );
+				// if (!redo) handleStateInline ( 'StateRequestPush', offset );
 				var dims = AudioUtils.ReplaceFloatArrays ( offset, buffers );
 
 				// add a region where the paste happened
@@ -1868,7 +1858,7 @@
 			wavesurfer.SelectedChannelsLen = chans;
 		};
 
-		app.listenFor ('RequestActionFX_Flip', function ( val, val2, redo ) {
+		app.listenFor ('RequestActionFX_Flip', function ( val, val2, redo, confirmed ) {
 			if (!q.is_ready) return ;
 			
 			app.fireEvent('RequestPause');
@@ -1892,10 +1882,12 @@
 			{
 				if (!redo) handleStateInline ( 'StateRequestPush', start, end, 'Flip Channels' );
 				AudioUtils.FX ( start, end, AudioUtils.FXBank.Flip ( val ) );
+				OneUp ('Applied Channel Change: ' + val);
 			}
+			else if (!confirmed) app.fireEvent('RequestFXUI_StereoMonoConfirmation', val, val2, redo);
 			else if (val === 'stereo')
 			{
-				if (!redo) handleStateInline ( 'StateRequestPush', start, end, 'Make Stereo', function(){_compute_channels ()});
+				// if (!redo) handleStateInline ( 'StateRequestPush', start, end, 'Make Stereo', function(){_compute_channels ()});
 
 				var originalBuffer = wavesurfer.backend.buffer;
 				var emptySegment   = wavesurfer.backend.ac.createBuffer (
@@ -1928,10 +1920,12 @@
 					app.fireEvent('IncreaseHistoryCounter');
 					app.fireEvent('NextHistoryOperation');
 				}
+
+				OneUp ('Applied Channel Change: ' + val);
 			}
 			else if (val === 'mono')
 			{
-				if (!redo) handleStateInline ('StateRequestPush', start, end, 'Make Mono', function(){_compute_channels()} );
+				// if (!redo) handleStateInline ('StateRequestPush', start, end, 'Make Mono', function(){_compute_channels()} );
 
 				var originalBuffer = wavesurfer.backend.buffer;
 				var emptySegment   = wavesurfer.backend.ac.createBuffer (
@@ -1960,9 +1954,11 @@
 					app.fireEvent('IncreaseHistoryCounter');
 					app.fireEvent('NextHistoryOperation');
 				}
+
+				OneUp ('Applied Channel Change: ' + val);
 			}
 
-			OneUp ('Applied Channel Change: ' + val);
+			
 		});
 
 		app.listenFor ('RequestActionFX_Reverse', function ( redo ) {

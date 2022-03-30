@@ -489,7 +489,7 @@
 		app.listenFor ('RequestFXUI_HistoryContinue', function (state) {
 			if (!PKAudioEditor.engine.is_ready) return;
 			var x = new PKSimpleModal({
-				title: 'History',
+				title: 'Continue Operation',
 				ondestroy: function( q ) {
 				   UI.InteractionHandler.on = false;
 				   UI.KeyHandler.removeCallback ('modalTemp');
@@ -525,6 +525,98 @@
 			   });
 			   x.Show();
 		})
+
+		var _sk = false;
+		app.listenFor ('RequestFXUI_RecordConfirmation', function () {
+			if (!PKAudioEditor.engine.is_ready) return;
+			var x = new PKSimpleModal({
+				title: 'Record',
+				ondestroy: function( q ) {
+				   UI.InteractionHandler.on = false;
+				   UI.KeyHandler.removeCallback ('modalTemp');
+				},
+				buttons:[
+					{
+					   title:'Continue',
+					   clss: 'pk_modal_a_accpt',
+					   callback: function ( q ) {
+							var radios = q.el_body.getElementsByClassName('pk_check');
+							if (radios[0].checked) {
+								if (_sk) return ;
+								// skipping the sounds of keyboard
+								_sk = true;
+								setTimeout(function () {
+									app.fireEvent('ResetHistory');
+									app.fireEvent('RequestActionRecordStart');
+									setTimeout(function() {
+										_sk = false;
+									}, 50);
+								},26);
+					   		}
+							q.Destroy();
+					   }
+					}
+				],
+				body: 'Recording over the track will reset the history, do you wish to proceed anyway?' +
+				'<div class="pk_row"><input type="radio" class="pk_check" id="ifeq" name="rdslnc" value="yes">'+ 
+				'<label  for="ifeq">Yes</label><br/>' +
+				'<input type="radio" class="pk_check"  id="vgdja" name="rdslnc" checked value="no">'+
+				'<label for="vgdja">No</label></div>',
+				setup:function( q ) {
+   				   UI.fireEvent ('RequestPause');
+					   UI.InteractionHandler.checkAndSet ('modal');
+					   UI.KeyHandler.addCallback ('modalTemp', function ( e ) {
+						   q.Destroy ();
+					   }, [27]);
+				}
+			   });
+			   x.Show();
+		});
+
+		app.listenFor ('RequestFXUI_StereoMonoConfirmation', function (val, val2, redo) {
+			if (!PKAudioEditor.engine.is_ready) return;
+			if (val === 'stereo')   {
+				var lowerMode = 'mono';
+				var upperMode = 'Mono';
+			} else {
+				var lowerMode = 'stereo'
+				var upperMode = 'Stereo';
+			}
+			var x = new PKSimpleModal({
+				title: upperMode + ' to ' + val,
+				ondestroy: function( q ) {
+				   UI.InteractionHandler.on = false;
+				   UI.KeyHandler.removeCallback ('modalTemp');
+				},
+				buttons:[
+					{
+					   title:'Continue',
+					   clss: 'pk_modal_a_accpt',
+					   callback: function ( q ) {
+							var radios = q.el_body.getElementsByClassName('pk_check');
+							if (radios[0].checked) {
+								app.fireEvent('ResetHistory');
+								app.fireEvent('RequestActionFX_Flip', val, val2, redo, true)
+							}
+							q.Destroy();
+					   }
+					}
+				],
+				body: 'Changing the track from ' + lowerMode + ' to ' + val + ' will reset the history, do you wish to proceed anyway?' +
+				'<div class="pk_row"><input type="radio" class="pk_check" id="ifeq" name="rdslnc" value="yes">'+ 
+				'<label  for="ifeq">Yes</label><br/>' +
+				'<input type="radio" class="pk_check"  id="vgdja" name="rdslnc" checked value="no">'+
+				'<label for="vgdja">No</label></div>',
+				setup:function( q ) {
+   				   UI.fireEvent ('RequestPause');
+					   UI.InteractionHandler.checkAndSet ('modal');
+					   UI.KeyHandler.addCallback ('modalTemp', function ( e ) {
+						   q.Destroy ();
+					   }, [27]);
+				}
+			   });
+			   x.Show();
+		});
 
 		app.listenFor ('RequestFXUI_Silence', function () {
 			var x = new PKSimpleModal({
