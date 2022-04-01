@@ -778,6 +778,7 @@
 												app.fls.GetSession (name, function ( e ) {
 													if(e && e.id === name )
 													{
+														app.fireEvent('ResetHistory');
 														app.engine.wavesurfer.backend._add = append ? 1 : 0;
 														app.engine.LoadDB ( e );
 													}
@@ -797,7 +798,6 @@
 														clss:'pk_modal_a_accpt',
 														callback: function( q ) {
 															overwrite ();
-
 															q.Destroy ();
 														}
 													},
@@ -931,6 +931,13 @@
 						name: 'Open History',
 						action: function () {
 							app.fireEvent ('RequestActionFXUI_History');
+						}
+					},
+
+					{
+						name: 'Reset History',
+						action: function () {
+							app.fireEvent ('RequestActionFXUI_ResetHistory');
 						}
 					}
 				]

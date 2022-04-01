@@ -474,8 +474,6 @@
 			 		boxes +
 					'</div>',
 			 setup:function( q ) {
-
-				for (let i = 0; i < history.length; i++) console.log(i + ": " + history[i].state.active);
 				UI.fireEvent ('RequestPause');
 					UI.InteractionHandler.checkAndSet ('modal');
 					UI.KeyHandler.addCallback ('modalTemp', function ( e ) {
@@ -558,6 +556,41 @@
 					}
 				],
 				body: 'Recording over the track will reset the history, do you wish to proceed anyway?' +
+				'<div class="pk_row"><input type="radio" class="pk_check" id="ifeq" name="rdslnc" value="yes">'+ 
+				'<label  for="ifeq">Yes</label><br/>' +
+				'<input type="radio" class="pk_check"  id="vgdja" name="rdslnc" checked value="no">'+
+				'<label for="vgdja">No</label></div>',
+				setup:function( q ) {
+   				   UI.fireEvent ('RequestPause');
+					   UI.InteractionHandler.checkAndSet ('modal');
+					   UI.KeyHandler.addCallback ('modalTemp', function ( e ) {
+						   q.Destroy ();
+					   }, [27]);
+				}
+			   });
+			   x.Show();
+		});
+
+		app.listenFor ('RequestActionFXUI_ResetHistory', function () {
+			if (!PKAudioEditor.engine.is_ready) return;
+			var x = new PKSimpleModal({
+				title: 'Confirm reset history',
+				ondestroy: function( q ) {
+				   UI.InteractionHandler.on = false;
+				   UI.KeyHandler.removeCallback ('modalTemp');
+				},
+				buttons:[
+					{
+					   title:'Continue',
+					   clss: 'pk_modal_a_accpt',
+					   callback: function ( q ) {
+							var radios = q.el_body.getElementsByClassName('pk_check');
+							if (radios[0].checked) app.fireEvent('ResetHistory');
+							q.Destroy();
+					   }
+					}
+				],
+				body: 'Do you wish to reset the history?' +
 				'<div class="pk_row"><input type="radio" class="pk_check" id="ifeq" name="rdslnc" value="yes">'+ 
 				'<label  for="ifeq">Yes</label><br/>' +
 				'<input type="radio" class="pk_check"  id="vgdja" name="rdslnc" checked value="no">'+

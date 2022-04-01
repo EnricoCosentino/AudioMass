@@ -70,6 +70,7 @@
 								title:'OPEN NEW',
 								callback: function( q ) {
 									wavesurfer.backend._add = 0;
+									//app.fireEvent('ResetHistory');
 									func ();
 									q.Destroy ();
 								}
@@ -187,6 +188,7 @@
 												title:'OPEN NEW',
 												callback: function( q ) {
 													wavesurfer.backend._add = 0;
+													//app.fireEvent('ResetHistory');
 													func ();
 													q.Destroy ();
 												}
@@ -420,6 +422,7 @@
 			app.fireEvent ('DidUpdateLen', wavesurfer.getDuration ());
 			app.fireEvent ('DidSetClipboard', 0);
 			app.fireEvent ('RequestSeekTo', 0);
+			app.fireEvent ('ResetHistory');
 
 			app.fireEvent ('RequestResize');
 			wavesurfer.getWaveEl().style.opacity = '1';

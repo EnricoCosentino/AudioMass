@@ -12,14 +12,13 @@
 
         q.getHistory = function() {return history;};
 
+        q.resetHistory = function() {history = [];}
+
         q.cleanInactiveHistory = function() {
             var i = history.length - 1;
-            console.log(history);
             while(history[i] && !history[i].state.active) {
                 history.pop();
                 i--;
-                console.log(history);
-                console.log(i);
             }
         }
 
@@ -32,38 +31,22 @@
                 if (state.meta[1])
                 {
                     eventString = eventString.concat(" for ", state.meta[1], " s ");
-                    if (state.meta[2]) eventString = eventString.concat("with the following param(s): ", state.meta[2].toString());
+                    // if (state.meta[2]) eventString = eventString.concat("with the following param(s): ", state.meta[2].toString());
                 }
             }
             var event = {'message':eventString, 'state':state};
             q.cleanInactiveHistory();
             history.push(event);
-            console.log(event);
-            return(true);
-        };
-
-        //Metodo da rimuovere assieme alla vecchia gestione degli stati
-        q.pushUndoAndRedoToHistory = function(state, undo) {
-            if (!state) return(false);
-            if (undo) var eventString = "Undone ";
-            else var eventString = "Redone ";
-            eventString = eventString.concat(state.desc);
-            var event = {'message':eventString, 'state':state};
-            q.cleanInactiveHistory();
-            history.push(event);
-            console.log(event);
             return(true);
         };
 
         q.changeHistory = function(changedEventsIndices) {
             changingHistory = true;
-            console.log(changedEventsIndices);
             for (let i = 0; i < changedEventsIndices.length; i++) {
                 history[changedEventsIndices[i]].state.active = !history[changedEventsIndices[i]].state.active;
             }
             currentPoint = 0;
             q.setStateBack(currentPoint);
-            console.log("State set back to index " + currentPoint);
         };
 
         q.setStateBack = function(index) {
@@ -80,16 +63,11 @@
         q.redoOperations = function() {
             while (history[currentPoint]) {
                 if (history[currentPoint].state.active) {
-                    console.log('Redoing operation at index ' + currentPoint);
                     _fireEvent('RedoOperation', history[currentPoint].state);
                 }
                 currentPoint++;
             }
             lastNewState = null;
-        }
-
-        q.resetHistory = function() {
-            history = [];
         }
 
         _listenFor('StateRequestPush', function(_state) {

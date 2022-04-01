@@ -3022,7 +3022,7 @@
 								newbuff.buffer
 							]
 						});
-
+						app.fireEvent('ResetHistory')
 						// ----
 						q.Destroy ();
 					};
@@ -3044,7 +3044,7 @@
 								newbuff.buffer
 							]
 						});
-
+						app.fireEvent('ResetHistory');
 						// ----
 						q.Destroy ();
 					};
