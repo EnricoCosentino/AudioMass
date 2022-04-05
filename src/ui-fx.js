@@ -468,6 +468,14 @@
 						app.fireEvent('RequestActionEditHistory', changedEventsIndices);
 						q.Destroy();
 					}
+				},
+				{
+					title:'Export',
+					clss: 'pk_modal_a_accpt',
+					callback: function ( q ) {
+						app.fireEvent('ExportHistory');
+						q.Destroy();
+					}
 				 }
 			 ],
 			 body:'<div class="pk_row pk_mm">'+

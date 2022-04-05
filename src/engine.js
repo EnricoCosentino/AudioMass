@@ -1229,7 +1229,7 @@
 
 			function handleStateInline ( event, start, end ) {
 				app.fireEvent (event, {
-					desc : 'Apply Hard Limit (fx)',
+					desc : 'Hard Limit (fx)',
 					meta : [ start, end , params, val],
 					region : region,
 					data : wavesurfer.backend.buffer,
@@ -1266,7 +1266,7 @@
 			var params = val;
 			function handleStateInline ( event, start, end ) {
 				app.fireEvent (event, {
-					desc : 'Apply Parametric EQ (fx)',
+					desc : 'Parametric EQ (fx)',
 					meta : [ start, end , params, val],
 					region : region,
 					data : wavesurfer.backend.buffer,
@@ -1358,7 +1358,7 @@
 			})(val);
 			function handleStateInline ( event, start, end ) {
 				app.fireEvent (event, {
-					desc : 'Apply Distortion (fx)',
+					desc : 'Distortion (fx)',
 					meta : [ start, end, params, val ],
 					region : region,
 					data : wavesurfer.backend.buffer,
@@ -1426,7 +1426,7 @@
 			})(val);
 			function handleStateInline ( event, start, end ) {
 				app.fireEvent (event, {
-					desc : 'Apply Delay (fx)',
+					desc : 'Delay (fx)',
 					meta : [ start, end, params, val],
 					region : region,
 					data : wavesurfer.backend.buffer,
@@ -1494,7 +1494,7 @@
 			})(val);
 			function handleStateInline ( event, start, end ) {
 				app.fireEvent (event, {
-					desc : 'Apply Reverb (fx)',
+					desc : 'Reverb (fx)',
 					meta : [ start, end, params, val ],
 					region : region,
 					data : wavesurfer.backend.buffer,
@@ -1565,7 +1565,7 @@
 			})(val);
 			function handleStateInline ( event, start, end ) {
 				app.fireEvent (event, {
-					desc : 'Apply Compressor (fx)',
+					desc : 'Compressor (fx)',
 					meta : [ start, end, params, val ],
 					region : region,
 					data : wavesurfer.backend.buffer,
@@ -1601,7 +1601,7 @@
 			var params = val;
 			function handleStateInline ( event, start, end ) {
 				app.fireEvent (event , {
-					desc : 'Normalize ',
+					desc : 'Normalize',
 					meta : [ start, end, params, val ],
 					region : region,
 					data : wavesurfer.backend.buffer,
@@ -1638,7 +1638,7 @@
 
 			function handleStateInline ( event, start, end ) {
 				app.fireEvent (event, {
-					desc : 'Invert ',
+					desc : 'Invert',
 					meta : [ start, end ],
 					region : region,
 					data : wavesurfer.backend.buffer,
@@ -1675,7 +1675,7 @@
 
 			function handleStateInline ( event, start, end ) {
 				app.fireEvent (event, {
-					desc : 'Remove Silence ',
+					desc : 'Remove Silence',
 					meta : [ start, end ],
 					region : region,
 					data : wavesurfer.backend.buffer,
@@ -1697,7 +1697,6 @@
 			var end = q.TrimTo ((region.end - region.start), 3);
 
 			if (!redo) handleStateInline ( 'StateRequestPush', start, end );
-			else handleStateInline ('UpdateState', start, end);
 
 						var originalBuffer = wavesurfer.backend.buffer;
 						var sil_arr = [];
@@ -1974,7 +1973,7 @@
 
 			function handleStateInline ( event, start, end ) {
 				app.fireEvent (event, {
-					desc : 'Reverse ',
+					desc : 'Reverse',
 					meta : [ start, end ],
 					region : region,
 					data : wavesurfer.backend.buffer,
@@ -2011,7 +2010,7 @@
 
 			function handleStateInline ( event, start, end ) {
 				app.fireEvent (event, {
-					desc : 'Apply Fade In (fx)',
+					desc : 'Fade In (fx)',
 					meta : [ start, end ],
 					region : region,
 					data : wavesurfer.backend.buffer,
@@ -2048,7 +2047,7 @@
 
 			function handleStateInline (event, start, end ) {
 				app.fireEvent (event, {
-					desc : 'Apply Fade Out (fx)',
+					desc : 'Fade Out (fx)',
 					meta : [ start, end ],
 					region : region,
 					data : wavesurfer.backend.buffer,
@@ -2141,7 +2140,7 @@
 
 			function handleStateInline ( event, start, end ) {
 				app.fireEvent (event, {
-					desc : 'Apply Gain (fx)',
+					desc : 'Gain (fx)',
 					meta : [ start, end, params, val ],
 					region : region,
 					data : wavesurfer.backend.buffer,
@@ -2206,7 +2205,7 @@
 
 			function handleStateInline ( event, start, end ) {
 				app.fireEvent (event, {
-					desc : 'Apply Speed (fx)',
+					desc : 'Speed (fx)',
 					meta : [ start, end, val ],
 					region : region,
 					data : wavesurfer.backend.buffer,
